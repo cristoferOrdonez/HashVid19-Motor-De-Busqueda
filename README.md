@@ -82,13 +82,13 @@ No se consideró el campo `pais`, ya que una gran parte de los registros carece 
 
 La indexación se genera a partir de la fecha y la hora del tweet. Para ello, se concatenan dos cadenas: la fecha (en formato `aaaa-mm-dd`) y las dos primeras cifras de la hora (`hh`) extraídas de una cadena con formato `hh:mm:ss`. El resultado es una clave única compuesta por la fecha y la hora en horas.
 
-```console
-2025-06-2614
-```
-
 **Ejemplo de cómo se forma la indexación:**
 
 Si la fecha es 2025-06-26 y la hora es 14:37:52, la indexación sería:
+
+```console
+2025-06-2614
+```
 
 La implementación hace uso de memoria compartida y tuberías como mecanismos de comunicación entre procesos (IPC):
 
