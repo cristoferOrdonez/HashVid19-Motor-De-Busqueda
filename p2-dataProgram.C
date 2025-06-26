@@ -24,8 +24,6 @@
 #define LLAVE_SHM_IDIOMA 789
 #define LLAVE_SHM_RESULTADOS 147
 
-#define LIMITE_BUFFER_RESULTADOS 25000
-
 // rutas para la creación de tuberias
 #define RUTA_FIFO_INDICE_TERMINADO "fifo_indice_terminado"
 #define RUTA_FIFO_RESULTADOS "fifo_resultados"
@@ -146,7 +144,7 @@ void crear_tabla_hash() {
     fwrite(tabla_indices, sizeof(int64_t), TAMANO_TABLA, indice_fd);
 
     printf("Procesando el dataset y construyendo el índice...\n");
-    char buffer_linea[256];
+    char buffer_linea[100];
     long long contador_tweets = 0;
     
     // guardado del offset después de la cabecera del CSV para empezar a leer datos reales
@@ -266,30 +264,20 @@ void cerrar_memoria_compartida(void* ap, int shmId){
 
 // función para buscar en el CSV usando la tabla hash 
 void busqueda() {
-    FILE *indice_fd, *dataset_fd;
-    int64_t *index_table;
-    
-    index_table = (int64_t *)malloc(TAMANO_TABLA * sizeof(int64_t));
-    if (!index_table) {
-        perror("Error al asignar memoria para la tabla de índice");
-        return;
-    }
 
+    // abrimos el indice y el data set
+    FILE *indice_fd, *dataset_fd;
+    
     indice_fd = fopen(ARCHIVO_INDICES, "rb");
     if (!indice_fd) {
         perror("No se pudo abrir el archivo de índice. ¿Ejecutaste la creación primero?");
-        free(index_table);
         return;
     }
     
-    // leer solo la tabla de cabeceras del archivo de índice
-    fread(index_table, sizeof(int64_t), TAMANO_TABLA, indice_fd);
-
     dataset_fd = fopen(ARCHIVO_DATASET, "r");
     if (!dataset_fd) {
         perror("No se pudo abrir el archivo de datos CSV");
         fclose(indice_fd);
-        free(index_table);
         return;
     }
 
@@ -297,96 +285,95 @@ void busqueda() {
     strncpy(hora_busqueda, tiempo_inicial, 2);
     hora_busqueda[2] = '\0';
 
-    // se concatena la fecha y la hora para el hash
     size_t tamano_resultado_busqueda = strlen(fecha) + strlen(hora_busqueda) + 1;
     char cadena_concatenada_busqueda[tamano_resultado_busqueda];
     snprintf(cadena_concatenada_busqueda, tamano_resultado_busqueda, "%s%s", fecha, hora_busqueda);
 
-    // calculo del índice hash para la fecha y la hora de búsqueda.
+    // obtenemos el codigo hash utiizando la fecha y la hora
     unsigned long valor_hash = hash_djb2(cadena_concatenada_busqueda);
-    unsigned int indice = valor_hash % TAMANO_TABLA;
-    int64_t offset_nodo_actual = index_table[indice];
+    unsigned int indice_hash = valor_hash % TAMANO_TABLA;
 
-    // si la cabecera es -1, no hay entradas para este hash
+    // solo accedemos a la cabezara el primer nodo en el indice (no obtenemos la lista de indices)
+    int64_t offset_nodo_actual;
+    fseek(indice_fd, indice_hash * sizeof(int64_t), SEEK_SET);
+    if (fread(&offset_nodo_actual, sizeof(int64_t), 1, indice_fd) != 1) {
+        fprintf(stderr, "Error al leer la cabecera del índice del archivo.\n");
+        fclose(indice_fd);
+        fclose(dataset_fd);
+        return;
+    }
+
+    // realizamos una consulta para saber cuantos registros ahi
     if (offset_nodo_actual == -1) {
-        int concidencias = 0;
-
-        escribir_en_tuberia(fd_resultados, &concidencias, sizeof(concidencias));
-
+        int coincidencias = 0;
+        escribir_en_tuberia(fd_resultados, &coincidencias, sizeof(coincidencias));
     } else {
-        int cantidad_coincidencias = 0, shm_id_resultados;
+        int cantidad_coincidencias = 0;
         struct NodoIndice nodo_actual;
         char buffer_linea[256];
 
-        struct Tweet buffer[LIMITE_BUFFER_RESULTADOS];
-
-        struct Tweet *ap_tweets;
-        
-        // recorrido de la lista enlazada de nodos dentro del archivo de índice para manejar colisiones
-        while (offset_nodo_actual != -1 && cantidad_coincidencias < LIMITE_BUFFER_RESULTADOS) {
-            // se salta a la posición del nodo actual en el archivo de índice
-            fseek(indice_fd, offset_nodo_actual, SEEK_SET);
+        int64_t offset_recorrido = offset_nodo_actual;
+        while (offset_recorrido != -1 && cantidad_coincidencias < LIMITE_BUFFER_RESULTADOS) {
+            fseek(indice_fd, offset_recorrido, SEEK_SET);
             fread(&nodo_actual, sizeof(struct NodoIndice), 1, indice_fd);
 
-            // ee salta a la posición del registro en el archivo CSV
             fseek(dataset_fd, nodo_actual.offset_csv, SEEK_SET);
             fgets(buffer_linea, sizeof(buffer_linea), dataset_fd);
             
-            // se parsea la línea del CSV para verificar la fecha (evitar colisiones)
             struct Tweet tweet = {0};
-            char *token_dataset;
-            char *puntero_guardado;
-            buffer_linea[strcspn(buffer_linea, "\n")] = 0; // se elimina salto de línea
+            sscanf(buffer_linea, "%ld,%10[^,],%8[^,],%3[^,],%3s", &tweet.id, tweet.fecha, tweet.tiempo, tweet.idioma, tweet.pais);
 
-            token_dataset = strtok_r(buffer_linea, ",", &puntero_guardado);
-            if (token_dataset) tweet.id = atoll(token_dataset);
-            token_dataset = strtok_r(NULL, ",", &puntero_guardado);
-            if (token_dataset) strncpy(tweet.fecha, token_dataset, sizeof(tweet.fecha) - 1);
-            token_dataset = strtok_r(NULL, ",", &puntero_guardado);
-            if (token_dataset) strncpy(tweet.tiempo, token_dataset, sizeof(tweet.tiempo) - 1);
-            token_dataset = strtok_r(NULL, ",", &puntero_guardado);
-            if (token_dataset) strncpy(tweet.idioma, token_dataset, sizeof(tweet.idioma) - 1);
-            token_dataset = strtok_r(NULL, "\n\r", &puntero_guardado);
-            if (token_dataset) strncpy(tweet.pais, token_dataset, sizeof(tweet.pais) - 1);
-
-             // se verifica si el registro cumple con todos los criterios de búsqueda.
             if (strcmp(tweet.fecha, fecha) == 0 &&
                 strcmp(tweet.idioma, idioma) == 0 &&
-                strcmp(tweet.tiempo, tiempo_inicial) >= 0 &&  // debe ser mayor o igual al tiempo inicial
-                strcmp(tweet.tiempo, tiempo_final) <= 0)      // debe ser menor o igual al tiempo final
-            {    
-                buffer[cantidad_coincidencias] = tweet;
+                strcmp(tweet.tiempo, tiempo_inicial) >= 0 &&
+                strcmp(tweet.tiempo, tiempo_final) <= 0) 
+            {
                 cantidad_coincidencias++;
             }
-            
-            // se mueve al siguiente nodo en la lista enlazada (cadena de colisión)
-            offset_nodo_actual = nodo_actual.offset_siguiente_nodo;
+            offset_recorrido = nodo_actual.offset_siguiente_nodo;
         }
 
-        if(cantidad_coincidencias == 0){
-
+        if (cantidad_coincidencias == 0) {
             escribir_en_tuberia(fd_resultados, &cantidad_coincidencias, sizeof(cantidad_coincidencias));
-
         } else {
 
-            // inicialización de memoria compartida para envio de resultados al proceso p1-dataProgram
-            ap_tweets = (struct Tweet*) inicializar_memoria_compartida(sizeof(struct Tweet)*cantidad_coincidencias, LLAVE_SHM_RESULTADOS, &shm_id_resultados);
+            // al saber cuantos registros hay, podemos crear la memoria compartida del tamaño adecuado y guardar los datos
+            int shm_id_resultados;
+            struct Tweet *ap_tweets = (struct Tweet*) inicializar_memoria_compartida(sizeof(struct Tweet) * cantidad_coincidencias, LLAVE_SHM_RESULTADOS, &shm_id_resultados);
+            
+            int indice_tweet = 0;
+            offset_recorrido = offset_nodo_actual; 
+            while (offset_recorrido != -1 && indice_tweet < cantidad_coincidencias) {
+                fseek(indice_fd, offset_recorrido, SEEK_SET);
+                fread(&nodo_actual, sizeof(struct NodoIndice), 1, indice_fd);
 
-            memcpy(ap_tweets, buffer, sizeof(struct Tweet)*cantidad_coincidencias);
+                fseek(dataset_fd, nodo_actual.offset_csv, SEEK_SET);
+                fgets(buffer_linea, sizeof(buffer_linea), dataset_fd);
+                
+                struct Tweet tweet = {0};
+                sscanf(buffer_linea, "%ld,%10[^,],%8[^,],%3[^,],%3s", &tweet.id, tweet.fecha, tweet.tiempo, tweet.idioma, tweet.pais);
+            
+                if (strcmp(tweet.fecha, fecha) == 0 &&
+                    strcmp(tweet.idioma, idioma) == 0 &&
+                    strcmp(tweet.tiempo, tiempo_inicial) >= 0 &&
+                    strcmp(tweet.tiempo, tiempo_final) <= 0) 
+                {
+
+                    ap_tweets[indice_tweet] = tweet;
+                    indice_tweet++;
+                }
+                offset_recorrido = nodo_actual.offset_siguiente_nodo;
+            }
 
             cerrar_memoria_compartida(ap_tweets, shm_id_resultados);
 
-            // enviar la cantidad de resultados encontrados a través de la tubería
+            // le indicamos al proceso de interfaz que los datos ya estan listos
             escribir_en_tuberia(fd_resultados, &cantidad_coincidencias, sizeof(cantidad_coincidencias));
-
         }
-
     }
 
-    // cierre de desciptores
     fclose(dataset_fd);
     fclose(indice_fd);
-    free(index_table);
 }
 
 int existe_archivo(const char *path) {
