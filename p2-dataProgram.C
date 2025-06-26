@@ -24,7 +24,7 @@
 #define LLAVE_SHM_IDIOMA 789
 #define LLAVE_SHM_RESULTADOS 147
 
-#define LIMITE_BUFFER_RESULTADOS 30000
+#define LIMITE_BUFFER_RESULTADOS 27000
 
 // rutas para la creación de tuberias
 #define RUTA_FIFO_INDICE_TERMINADO "fifo_indice_terminado"
