@@ -87,11 +87,11 @@ La implementación hace uso de memoria compartida y tuberías como mecanismos de
 - **Tuberías nombradas (FIFO)**: este mecanismo se emplea para la señalización y el intercambio de información de control. Por ejemplo, se utiliza `testigo` para indicar el inicio de la búsqueda y se envía `cantidad_coincidencias` que comunica al proceso de interfaz de usuario el número de resultados obtenidos. 
 
 ### Indexación
-La indexación se genera a partir de la fecha y la hora del tweet. Para ello, se concatenan dos cadenas: la fecha (en formato `aaaa-mm-dd`) y las dos primeras cifras de la hora (`hh`) extraídas de una cadena con formato `hh:mm:ss`. El resultado es una clave única compuesta por la fecha y la hora en horas.
+La indexación se genera a partir de la fecha y la hora del tweet. Para ello, se concatenan dos cadenas: la fecha (en formato `AAAA-MM-DD`) y las dos primeras cifras de la hora (`HH`) extraídas de una cadena con formato `HH:MM:SS`. El resultado es una clave única compuesta por la fecha y la hora en horas.
 
 **Ejemplo de cómo se forma la indexación:**
 
-Si la fecha es 2025-06-26 y la hora es 14:37:52, la indexación sería:
+Si la fecha es `2025-06-26` y la hora es `14:37:52`, la indexación sería:
 
 ```console
 2025-06-2614
