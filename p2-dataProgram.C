@@ -313,7 +313,7 @@ void busqueda() {
         char buffer_linea[256];
 
         int64_t offset_recorrido = offset_nodo_actual;
-        while (offset_recorrido != -1 && cantidad_coincidencias < LIMITE_BUFFER_RESULTADOS) {
+        while (offset_recorrido != -1) {
             fseek(indice_fd, offset_recorrido, SEEK_SET);
             fread(&nodo_actual, sizeof(struct NodoIndice), 1, indice_fd);
 
