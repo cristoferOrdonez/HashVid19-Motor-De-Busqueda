@@ -101,54 +101,52 @@ Para asegurar una búsqueda menor a dos segundos, el sistema implementa una **ta
 
 
 ## Ejemplos de uso 
-
 Los ejemplos de uso se muestran a continuación:
 
 - Ejemplo 1: 
     ```console
-    Fecha: 2020-03-08
-
-    Tiempo inicial: 00:00:00
-
-    Tiempo final: 00:00:00
-
-    Idioma: en
-    ```
-
-    Resultado: NA (no se encontraron coincidencias)
-
-    Video: [Ejemplo 1](https://drive.google.com/file/d/1yF3abt5WhG6Ga5k4F-qZr0c7M6LSZc5M/view?usp=sharing)
-
-- Ejemplo 2:
-
-    ```console
-    Fecha: 2021-01-01
-
-    Tiempo inicial: 02:02:02
-
-    Tiempo final: 02:02:02
-
-    Idioma: en
-    ```
-
-    Resultado: 13 registros encontrados
-
-    Video: [Ejemplo 2](https://drive.google.com/file/d/1-6B5TzvgpbSCA95nIgSeB-yKL_XSgTL-/view?usp=sharing)
-
-- Ejemplo 3:
-
-    ```console
     Fecha: 2020-01-01
-    
-    Tiempo inicial: 20:28:39
-    
-    Tiempo final: 20:28:39
-    
+
+    Tiempo inicial: 20:00:00
+
+    Tiempo final: 20:59:59
+
     Idioma: ru
     ```
 
     Resultado: 1 registro encontrado
 
-    Video: [Ejemplo 3](https://drive.google.com/file/d/15bwUQCBrp1Gmj93Isn6xhRJHGIDZckN_/view?usp=sharing)
+    Video: [Ejemplo 1](https://drive.google.com/file/d/1AYK4Yz7COyori-oqr7MMEHBXAkKNjMO_/view?usp=sharing)
 
+- Ejemplo 2:
+
+    ```console
+    Fecha: 2020-04-13
+
+    Tiempo inicial: 12:00:00
+
+    Tiempo final: 12:59:59
+
+    Idioma: en
+    ```
+
+    Resultado: 24830 registros encontrados
+
+    Video: [Ejemplo 2](https://drive.google.com/file/d/1XIfN6gD_6xHiYp797WmRYHahn8rRYEiI/view?usp=sharing)
+
+- Ejemplo 3:
+
+    ```console
+    Fecha: 2022-02-02
+    
+    Tiempo inicial: 12:00:00
+    
+    Tiempo final: 12:59:59
+    
+    Idioma: en
+    ```
+
+    Resultado: NA (ningún registro encontrado)
+
+    Video: [Ejemplo 3](https://drive.google.com/file/d/1VeaCZb_lbCQpZytS_J-uPdTz8qs0GRq3/view?usp=sharing)
 
