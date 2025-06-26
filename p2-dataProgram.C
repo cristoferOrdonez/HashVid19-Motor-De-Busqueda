@@ -303,7 +303,7 @@ void busqueda() {
         return;
     }
 
-    // realizamos una consulta para saber cuantos registros ahi
+    // realizamos una consulta para saber cuantos registros hay
     if (offset_nodo_actual == -1) {
         int coincidencias = 0;
         escribir_en_tuberia(fd_resultados, &coincidencias, sizeof(coincidencias));
