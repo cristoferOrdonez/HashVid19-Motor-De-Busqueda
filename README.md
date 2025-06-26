@@ -74,7 +74,7 @@ Para llevar a cabo la búsqueda de registros en el *dataset*, se seleccionaron l
 | **Rango de tiempo (inicial y final)** | El análisis temporal mediante el filtrado por rangos de hora permite detectar concentraciones de actividad en momentos específicos del día, evidenciadas por el volumen de tweets publicados. Esta información, combinada con el filtrado por fecha, resulta útil para identificar patrones de comportamiento durante períodos críticos de la pandemia.       | Horas entre 00:00:00 y 23:59:59. |
 | **idioma** | El filtrado por idioma permite comprender los distintos contextos culturales y geográficos durante el desarrollo de la pandemia. A través de este análisis, es posible identificar percepciones, preocupaciones y posibles focos de desinformación presentes en diversas comunidades lingüísticas.  | Código alfabético de 2 o 3 letras. |
 
-**Nota:** para seleccionar el rango de tiempo, el usuario elige un número entre 0 y 23. Si el número seleccionado es xx, el tiempo inicial se define como `xx:00:00` y el tiempo final como `xx:59:59`.
+**Nota:** para seleccionar el rango de tiempo, el usuario elige un número entre 0 y 23. Si el número seleccionado es `xx`, el tiempo inicial se define como `xx:00:00` y el tiempo final como `xx:59:59`.
 
 No se consideró el campo `pais`, ya que una gran parte de los registros carece de esta información, lo que limita su utilidad para fines de investigación o análisis de datos; tampoco se incluyó el campo `id` como criterio principal de búsqueda, dado que es poco probable que un usuario común disponga del identificador exacto de un tweet para realizar consultas específicas.
 
