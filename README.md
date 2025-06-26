@@ -80,6 +80,16 @@ No se consideró el campo `pais`, ya que una gran parte de los registros carece 
 
 ### Comunicación entre procesos
 
+La indexación se genera a partir de la fecha y la hora del tweet. Para ello, se concatenan dos cadenas: la fecha (en formato `aaaa-mm-dd`) y las dos primeras cifras de la hora (`hh`) extraídas de una cadena con formato `hh:mm:ss`. El resultado es una clave única compuesta por la fecha y la hora en horas.
+
+```console
+2025-06-2614
+```
+
+**Ejemplo de cómo se forma la indexación:**
+
+Si la fecha es 2025-06-26 y la hora es 14:37:52, la indexación sería:
+
 La implementación hace uso de memoria compartida y tuberías como mecanismos de comunicación entre procesos (IPC):
 
 - **Memoria compartida:** este mecanismo es implementado para permitir que la interfaz de usuario transmita los criterios al proceso de busqueda y, a su vez, reciba los resultados obtenidos (registros correspondientes a tweets).
@@ -91,7 +101,7 @@ Para asegurar una búsqueda menor a dos segundos, el sistema implementa una **ta
 
 * **Creación del Índice**: cuando el programa se ejecuta por primera vez (o si el archivo de índice aún no ha sido creado) se genera un archivo binario denominado `index.bin`. Este archivo contiene una tabla hash estructurada en dos componentes principales: la tabla de cabeceras y una serie de nodos de índice. Cada nodo incluye un `offset_csv`, que señala la posición exacta del registro en el archivo `.csv`, y un `offset_siguiente_nodo`, que permite gestionar colisiones mediante listas enlazadas implementadas dentro del mismo archivo binario `index.bin`.
   
-* **Función Hash**: para realizar la indexación a partir de la fecha, se utiliza la función `hash_djb2`, conocida por su simplicidad y por su buen desempeño en la distribución de claves. En caso de colisiones, estas se manejan mediante listas enlazadas, permitiendo almacenar múltiples entradas que comparten la misma posición en la tabla hash.
+* **Función Hash**: para realizar la indexación a partir de la fecha y la hora, se utiliza la función `hash_djb2`, conocida por su simplicidad y por su buen desempeño en la distribución de claves. En caso de colisiones, estas se manejan mediante listas enlazadas, permitiendo almacenar múltiples entradas que comparten la misma posición en la tabla hash.
     * **¿Por qué el algoritmo djb2?** El algoritmo de hashing `djb2` fue desarrollado por Daniel J. Bernstein a mediados de la década de 1990. Su diseño, basado en operaciones simples como desplazamientos de bits y sumas, permite una ejecución extremadamente rápida; esta característica resulta fundamental para el programa, ya que se requiere un tiempo de búsqueda inferior a los dos segundos.
         
         Además, la simplicidad de su implementación facilita su integración en el código, lo cual fue especialmente útil durante el desarrollo del sistema de indexación.
