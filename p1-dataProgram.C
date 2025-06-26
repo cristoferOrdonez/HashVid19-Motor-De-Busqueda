@@ -546,8 +546,7 @@ void señal_de_cierre(int sig){
 
     cerrar_proceso();
 
-    kill(getpid(), SIGTERM); // SIGTERM se considera una forma menos abrupta para cerrar un programa
-
+    exit(0);
 }
 
 void inicializar_tuberias(){
