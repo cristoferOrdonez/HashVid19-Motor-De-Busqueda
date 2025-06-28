@@ -1,5 +1,5 @@
 
-# Práctica I - Sistemas Operativos
+# HashVid19 - Motor de Busqueda
 
 | Nombre           | GitHub   | Contacto              |
 | ---------------- | -------- |-------------------------|
